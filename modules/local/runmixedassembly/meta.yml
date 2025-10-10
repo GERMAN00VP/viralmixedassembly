@@ -1,0 +1,45 @@
+name: run_mixed_assembly
+description: |
+  Runs the `mixedassembly run-mixed-assembly` command to process a multiple alignment, using as a reference the given reference name, and also using a priors table, generating amixed consensus sequence (FASTA) and QC results in CSV and JSON formats.
+keywords:
+  - mixedassembly
+  - assembly
+  - qc
+  - bioinformatics
+tools:
+  - name: mixedassembly
+    description: Tool for mixed sequence assembly.
+    homepage: https://github.com/GERMAN00VP/mixedAssembly
+    documentation: https://github.com/GERMAN00VP/mixedAssembly#readme
+    licence: Attribution Permissive License (APL) 1.0
+    container:
+      docker: "vallejopalmagerman/mixedassembly:0.1.4"
+      singularity: "docker://vallejopalmagerman/mixedassembly:0.1.4"
+input:
+  - meta:
+      type: map
+      description: Sample metadata map
+  - alignment:
+      type: file
+      description: Multiple alignment file (.aln)
+  - ref_id:
+      type: string
+      description: Reference identifier
+  - priors:
+      type: file
+      description: Priors file in .parquet format
+output:
+  - meta:
+      type: map
+      description: Sample metadata
+  - csv:
+      type: file
+      description: QC results file (.csv)
+  - json:
+      type: file
+      description: Statistics output file (.json)
+  - fasta:
+      type: file
+      description: Resulting FASTA file
+authors:
+  - "@GERMAN00VP"
