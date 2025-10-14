@@ -2,9 +2,49 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/viralmixedassembly/master/nextflow_schema.json",
     "title": "nf-core/viralmixedassembly pipeline parameters",
-    "description": "Pipeline for dual assembly of viral sequences from illumina short reads using mapping-based and de novo strategies and merging the resultant consensus sequences into a mixed viral consensus sequence. ",
+    "description": "Pipeline for dual assembly of viral sequences from illumina short reads using mapping-based and de novo strategies and merging the resultant consensus sequences into a mixed viral consensus sequence.",
     "type": "object",
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/preprocessing_options"
+        },
+        {
+            "$ref": "#/$defs/reference_genome_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        }
+    ],
     "$defs": {
+        "preprocessing_options": {
+            "title": "Preprocessing options",
+            "type": "object",
+            "fa_icon": "fas fa-filter",
+            "description": "Options for read preprocessing and host filtering.",
+            "properties": {
+                "fasta_adapter": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.(fasta|fa|fn?a)$",
+                    "description": "Optional FASTA file with adapter sequences for FASTP trimming",
+                    "fa_icon": "fas fa-file-lines",
+                    "help_text": "Provide a FASTA file with custom adapter sequences for FASTP. If not specified, FASTP will use automatic adapter detection."
+                },
+                "kraken2_db": {
+                    "type": "string",
+                    "default": "https://zenodo.org/records/8339700/files/k2_Human_20230629.tar.gz?download=1",
+                    "description": "Kraken2 database for human host removal",
+                    "fa_icon": "fas fa-database",
+                    "help_text": "URL or path to Kraken2 database for human read filtering. Default uses the specific human genome database from Zenodo."
+                }
+            }
+        },
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -227,19 +267,5 @@
                 }
             }
         }
-    },
-    "allOf": [
-        {
-            "$ref": "#/$defs/input_output_options"
-        },
-        {
-            "$ref": "#/$defs/reference_genome_options"
-        },
-        {
-            "$ref": "#/$defs/institutional_config_options"
-        },
-        {
-            "$ref": "#/$defs/generic_options"
-        }
-    ]
+    }
 }

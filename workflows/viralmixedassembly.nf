@@ -5,10 +5,11 @@
 */
 
 include { paramsSummaryMap               } from 'plugin/nf-schema'
+
 include { SUBWORKFLOW_PREPROCESS         } from '../subworkflows/local/preprocess/main'
 include { SUBWORKFLOW_PARALLEL_ASSEMBLY  } from '../subworkflows/local/parallel_assembly/main'
-include { SUBWORKFLOW_MERGE_CONSENSUS    } from '../subworkflows/local/merge_consensus/main' 
-include { SUBWORKFLOW_MIXASSEMBLY_QC     } from '../subworkflows/local/mixassembly_qc/main'
+
+
 include { paramsSummaryMultiqc           } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML         } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText         } from '../subworkflows/local/utils_nfcore_viralmixedassembly_pipeline'
@@ -39,14 +40,12 @@ workflow VIRALMIXEDASSEMBLY {
 
     // 1. PREPROCESSING & HOST FILTERING
     SUBWORKFLOW_PREPROCESS(ch_samplesheet)
-    ch_versions = ch_versions.mix(SUBWORKFLOW_PREPROCESS.out.versions)
-    ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_PREPROCESS.out.multiqc)
+
 
     // 2. PARALLEL ASSEMBLY STRATEGIES  
     SUBWORKFLOW_PARALLEL_ASSEMBLY(SUBWORKFLOW_PREPROCESS.out.reads)
-    ch_versions = ch_versions.mix(SUBWORKFLOW_PARALLEL_ASSEMBLY.out.versions)
-    ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_PARALLEL_ASSEMBLY.out.multiqc)
 
+"""
     // 3. CONSENSUS MERGING & POLISHING
     SUBWORKFLOW_MERGE_CONSENSUS(
         SUBWORKFLOW_PARALLEL_ASSEMBLY.out.irma_assembly,
@@ -59,7 +58,16 @@ workflow VIRALMIXEDASSEMBLY {
     SUBWORKFLOW_MIXASSEMBLY_QC(SUBWORKFLOW_MERGE_CONSENSUS.out.consensus)
     ch_versions = ch_versions.mix(SUBWORKFLOW_MIXASSEMBLY_QC.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_MIXASSEMBLY_QC.out.multiqc)
+"""
 
+
+    ch_versions = ch_versions.mix(SUBWORKFLOW_PARALLEL_ASSEMBLY.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_PARALLEL_ASSEMBLY.out.multiqc)
+    
+    // Flatten versions channel to avoid ArrayBag issues
+    ch_versions = ch_versions.mix(SUBWORKFLOW_PREPROCESS.out.versions).flatten()
+    
+    ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_PREPROCESS.out.multiqc.collect())
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         MULTIQC & REPORTING INFRASTRUCTURE
@@ -114,8 +122,6 @@ workflow VIRALMIXEDASSEMBLY {
 
     emit:
     preprocess        = SUBWORKFLOW_PREPROCESS.out.reads           // channel: [ val(meta), path(reads) ]
-    consensus         = SUBWORKFLOW_MERGE_CONSENSUS.out.consensus  // channel: [ val(meta), path(consensus_fasta) ]
-    qc_reports        = SUBWORKFLOW_MIXASSEMBLY_QC.out.reports     // channel: QC reports
     multiqc_report    = MULTIQC.out.report.toList()                // channel: /path/to/multiqc_report.html
     versions          = ch_versions                                // channel: [ path(versions.yml) ]
 

@@ -1,0 +1,47 @@
+name: irma
+description: Iterative Reference-guided Assembly for viral genomes
+keywords:
+  - assembly
+  - viral
+  - reference-guided
+  - consensus
+
+tools:
+  - irma
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - reads:
+      type: file
+      description: |
+        Input reads (FASTQ format), either single-end or paired-end
+  - virus_type:
+      type: val
+      description: |
+        Virus type for IRMA (e.g., RSV, FLU, SARS-CoV-2)
+
+output:
+  - consensus:
+      type: file
+      description: Consensus sequence in FASTA format
+      pattern: "*_consensus.fa"
+  - reference:
+      type: file
+      description: Reference sequence used by IRMA
+      pattern: "reference.fasta"
+  - vcf:
+      type: file
+      description: Variant call files
+      pattern: "*.vcf"
+  - stats:
+      type: file
+      description: Assembly statistics
+      pattern: "*_stats.txt"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"

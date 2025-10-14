@@ -1,6 +1,5 @@
-include { IRMA } from '../../../modules/nf-core/irma/main' // TO DO
+include { IRMA } from '../../../modules/local/irma/main'
 include { SPADES } from '../../../modules/nf-core/spades/main'
-include { FETCH_REFERENCE } from '../../../modules/local/fetch_reference/main' // TO DO ? SI no se puede sacar directo de IRMA
 include { ABACAS } from '../../../modules/nf-core/abacas/main'
 
 workflow SUBWORKFLOW_PARALLEL_ASSEMBLY {
@@ -9,29 +8,37 @@ workflow SUBWORKFLOW_PARALLEL_ASSEMBLY {
     
     main:
     
-    // Ensamblajes en paralelo
-    ch_irma_assembly = IRMA(reads)
-    ch_spades_assembly = SPADES(reads)
-
-    // Obtener referencia usada por IRMA
-    ch_reference = FETCH_REFERENCE(ch_irma_assembly.out.reference)
+    // Get virus type from params with RSV as default
+    def virus_type = params.virus_type ?: "RSV"
     
-    // Ordenar contigs con referencia como guía
-    ch_spades_ordered = ABACAS(ch_spades_assembly.out.contigs, ch_reference)
+    // Parallel assembly strategies
+    IRMA(reads, virus_type)    // Reference-guided assembly with configurable virus type
+    SPADES(reads)              // De novo assembly
+    
+    // Order SPAdes contigs using IRMA reference as guide
+    ABACAS(SPADES.out.contigs, IRMA.out.reference)
+
+    // Collect software versions
+    ch_versions = Channel.empty()
+    ch_versions = ch_versions.mix(IRMA.out.versions)
+    ch_versions = ch_versions.mix(SPADES.out.versions)
+    ch_versions = ch_versions.mix(ABACAS.out.versions)
+
+    // Prepare MultiQC files
+    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = ch_multiqc_files.mix(IRMA.out.stats.map { meta, file -> file })
+    ch_multiqc_files = ch_multiqc_files.mix(SPADES.out.contigs_stats.map { meta, file -> file })
+    ch_multiqc_files = ch_multiqc_files.mix(ABACAS.out.stats.map { meta, file -> file })
     
     emit:
-    irma_assembly    = ch_irma_assembly.consensus            // channel: [ val(meta), path(irma_assembly) ]
-    spades_assembly  = ch_spades_ordered          // channel: [ val(meta), path(spades_assembly) ]
-    reference        = ch_reference               // channel: [ path(reference_fasta) ]
-    versions         = ch_versions.mix(
-        IRMA.out.versions.first(),
-        SPADES.out.versions.first(),
-        FETCH_REFERENCE.out.versions.first(),
-        ABACAS.out.versions.first()
-    ).collect()                                   // channel: [ versions.yml ]
-    multiqc          = ch_multiqc.mix(
-        IRMA.out.stats.collect{ it[1] }.map{ [it] },
-        SPADES.out.contigs_stats.collect{ it[1] }.map{ [it] },
-        ABACAS.out.stats.collect{ it[1] }.map{ [it] }
-    )                                             // channel: [ [ irma_stats ], [ spades_stats ], [ abacas_stats ] ]
+    // For internal use by next subworkflow
+    versions         = ch_versions
+    multiqc          = ch_multiqc_files
+    // Assembly outputs for downstream analysis
+    irma_consensus    = IRMA.out.consensus
+    abacas_consensus  = ABACAS.out.ordered_contigs
+    reference        = IRMA.out.reference           // Direct from IRMA
+    irma_stats       = IRMA.out.stats
+    spades_stats     = SPADES.out.contigs_stats
+    abacas_stats     = ABACAS.out.stats
 }
