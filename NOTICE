@@ -1,0 +1,18 @@
+This software contains third-party components:
+
+IRMA (Influenza Reassortment Mapper)
+Copyright 2024 Flu informatics
+Licensed under the Apache License, Version 2.0
+https://github.com/CDCgov/irma
+
+Components distributed with IRMA:
+- BLAT v35 - Non-commercial license
+- minimap2 v2.29 - MIT License
+- GNU Parallel v20200422 - GPL v3
+- pigz v2.8 - Free redistribution license
+- samtools v1.21 - MIT/Expat License
+- SSW v1.2.5M - MIT License
+- SHOGUN v1.1.0 - GPL v3
+- SAM v3.5 - Custom academic license
+
+See third_party_licenses/ directory for complete license texts.

@@ -1,6 +1,4 @@
 include { IRMA } from '../../../modules/local/irma/main'
-include { SPADES } from '../../../modules/nf-core/spades/main'
-include { ABACAS } from '../../../modules/nf-core/abacas/main'
 
 workflow SUBWORKFLOW_PARALLEL_ASSEMBLY {
     take:
@@ -8,37 +6,30 @@ workflow SUBWORKFLOW_PARALLEL_ASSEMBLY {
     
     main:
     
-    // Get virus type from params with RSV as default
     def virus_type = params.virus_type ?: "RSV"
-    
-    // Parallel assembly strategies
-    IRMA(reads, virus_type)    // Reference-guided assembly with configurable virus type
-    SPADES(reads)              // De novo assembly
-    
-    // Order SPAdes contigs using IRMA reference as guide
-    ABACAS(SPADES.out.contigs, IRMA.out.reference)
+    IRMA(reads, virus_type)
 
-    // Collect software versions
-    ch_versions = Channel.empty()
-    ch_versions = ch_versions.mix(IRMA.out.versions)
-    ch_versions = ch_versions.mix(SPADES.out.versions)
-    ch_versions = ch_versions.mix(ABACAS.out.versions)
+    // Filtrar muestras que SÍ tuvieron mapeo
+    successful_irma = IRMA.out.consensus.map { meta, consensus_file ->
+        // Leer primera línea del consenso para ver si es vacío
+        def first_line = consensus_file.readLines().first()
+        def has_mapping = !first_line.contains("no_mapping") && !first_line.contains("NO_CONSENSUS")
+        [meta, consensus_file, has_mapping]
+    }.filter { meta, file, has_mapping -> has_mapping }
+     .map { meta, file, has_mapping -> [meta, file] }
 
-    // Prepare MultiQC files
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_files = ch_multiqc_files.mix(IRMA.out.stats.map { meta, file -> file })
-    ch_multiqc_files = ch_multiqc_files.mix(SPADES.out.contigs_stats.map { meta, file -> file })
-    ch_multiqc_files = ch_multiqc_files.mix(ABACAS.out.stats.map { meta, file -> file })
+    // Referencias correspondientes a muestras exitosas
+    successful_references = IRMA.out.reference.combine(successful_irma)
+        .map { meta_ref, ref_file, meta_cons, cons_file -> 
+            [meta_cons, ref_file] 
+        }
+
+    // Versiones (siempre emitir)
+    ch_versions = IRMA.out.versions
     
     emit:
-    // For internal use by next subworkflow
-    versions         = ch_versions
-    multiqc          = ch_multiqc_files
-    // Assembly outputs for downstream analysis
-    irma_consensus    = IRMA.out.consensus
-    abacas_consensus  = ABACAS.out.ordered_contigs
-    reference        = IRMA.out.reference           // Direct from IRMA
-    irma_stats       = IRMA.out.stats
-    spades_stats     = SPADES.out.contigs_stats
-    abacas_stats     = ABACAS.out.stats
+    versions       = ch_versions
+    irma_consensus = successful_irma      // Solo muestras con mapeo
+    reference      = successful_references // Solo referencias de muestras con mapeo
+    all_irma_raw   = IRMA.out.consensus    // Todas las muestras (para debug)
 }

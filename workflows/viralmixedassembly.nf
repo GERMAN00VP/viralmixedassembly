@@ -45,10 +45,11 @@ workflow VIRALMIXEDASSEMBLY {
     // 2. PARALLEL ASSEMBLY STRATEGIES  
     SUBWORKFLOW_PARALLEL_ASSEMBLY(SUBWORKFLOW_PREPROCESS.out.reads)
 
-"""
+   // COMENTADO TEMPORALMENTE - Descomenta cuando tengas estos subworkflows
+    /*
     // 3. CONSENSUS MERGING & POLISHING
     SUBWORKFLOW_MERGE_CONSENSUS(
-        SUBWORKFLOW_PARALLEL_ASSEMBLY.out.irma_assembly,
+        SUBWORKFLOW_PARALLEL_ASSEMBLY.out.irma_consensus,  // CORRECCIÓN: irma_consensus no irma_assembly
         SUBWORKFLOW_PARALLEL_ASSEMBLY.out.spades_assembly,
         SUBWORKFLOW_PARALLEL_ASSEMBLY.out.reference
     )
@@ -58,14 +59,11 @@ workflow VIRALMIXEDASSEMBLY {
     SUBWORKFLOW_MIXASSEMBLY_QC(SUBWORKFLOW_MERGE_CONSENSUS.out.consensus)
     ch_versions = ch_versions.mix(SUBWORKFLOW_MIXASSEMBLY_QC.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_MIXASSEMBLY_QC.out.multiqc)
-"""
+    */
 
 
+    ch_versions = ch_versions.mix(SUBWORKFLOW_PREPROCESS.out.versions)
     ch_versions = ch_versions.mix(SUBWORKFLOW_PARALLEL_ASSEMBLY.out.versions)
-    ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_PARALLEL_ASSEMBLY.out.multiqc)
-    
-    // Flatten versions channel to avoid ArrayBag issues
-    ch_versions = ch_versions.mix(SUBWORKFLOW_PREPROCESS.out.versions).flatten()
     
     ch_multiqc_files = ch_multiqc_files.mix(SUBWORKFLOW_PREPROCESS.out.multiqc.collect())
     /*
@@ -122,6 +120,7 @@ workflow VIRALMIXEDASSEMBLY {
 
     emit:
     preprocess        = SUBWORKFLOW_PREPROCESS.out.reads           // channel: [ val(meta), path(reads) ]
+    consensus_irma    = SUBWORKFLOW_PARALLEL_ASSEMBLY.out.irma_consensus 
     multiqc_report    = MULTIQC.out.report.toList()                // channel: /path/to/multiqc_report.html
     versions          = ch_versions                                // channel: [ path(versions.yml) ]
 

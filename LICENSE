@@ -1,13 +1,25 @@
-MIT License
+Attribution Permissive License (APL) 1.0
 
-Copyright (c) The nf-core/viralmixedassembly team
+Copyright (c) 2025 Germán Vallejo Palma
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+  * ATTRIBUTION: Redistributions of source or binary form, modified or
+    unmodified, must retain the following attribution notice in a conspicuous
+    location (for example, in the repository README, the package metadata,
+    or in a NOTICE file shipped with binaries):
+
+      "This software was developed by Germán Vallejo Palma at the Instituto de
+       Salud Carlos III — National Centre of Microbiology (Respiratory Viruses
+       and Influenza Unit)."
+
+  * THIRD-PARTY LICENSES: This software incorporates third-party components
+    governed by separate licenses. See the NOTICE file for complete details
+    of all third-party licenses and attributions.
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
